@@ -1,63 +1,61 @@
-// DOM Elements
-const taskInput = document.getElementById('task-input');
-const addBtn = document.getElementById('add-btn');
-const taskList = document.getElementById('task-list');
+document.addEventListener("DOMContentLoaded", () => {
+    const taskInput = document.getElementById("taskInput");
+    const addTaskBtn = document.getElementById("addTaskBtn");
+    const taskList = document.getElementById("taskList");
 
-// Load tasks from localStorage when app starts
-let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+    // 1. Load existing items out of localStorage memory array on setup
+    let savedTasks = JSON.parse(localStorage.getItem("tasks")) || [];
 
-// Render tasks to the screen
-function renderTasks() {
-    taskList.innerHTML = '';
-    tasks.forEach((task, index) => {
-        const li = document.createElement('li');
-        if (task.completed) li.classList.add('completed');
+    const saveToStorage = () => {
+        localStorage.setItem("tasks", JSON.stringify(savedTasks));
+    };
 
-        li.innerHTML = `
-            <span class="task-text" onclick="toggleComplete(${index})">${task.text}</span>
-            <div class="actions">
-                <button onclick="toggleComplete(${index})">${task.completed ? '↩️' : '✅'}</button>
-                <button onclick="deleteTask(${index})">❌</button>
-            </div>
-        `;
-        taskList.appendChild(li);
+    const renderTasks = () => {
+        taskList.innerHTML = "";
+        savedTasks.forEach((task, index) => {
+            const li = document.createElement("li");
+            li.className = `task-item ${task.completed ? 'completed' : ''}`;
+
+            li.innerHTML = `
+                <span class="task-text">${task.text}</span>
+                <button class="delete-btn">🗑️</button>
+            `;
+
+            // Toggle complete state when clicking the item string
+            li.querySelector(".task-text").addEventListener("click", () => {
+                savedTasks[index].completed = !savedTasks[index].completed;
+                saveToStorage();
+                renderTasks();
+            });
+
+            // Handle deletion action clicking dumpster element
+            li.querySelector(".delete-btn").addEventListener("click", () => {
+                savedTasks.splice(index, 1);
+                saveToStorage();
+                renderTasks();
+            });
+
+            taskList.appendChild(li);
+        });
+    };
+
+    // Add entry callback function helper logic
+    const handleAddTask = () => {
+        const textValue = taskInput.value.trim();
+        if (textValue === "") return;
+
+        savedTasks.push({ text: textValue, completed: false });
+        taskInput.value = "";
+        saveToStorage();
+        renderTasks();
+    };
+
+    addTaskBtn.addEventListener("click", handleAddTask);
+    taskInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") handleAddTask();
     });
-    saveToLocalStorage();
-}
 
-// Add a new task
-function addTask() {
-    const text = taskInput.value.trim();
-    if (text === '') return;
-
-    tasks.push({ text: text, completed: false });
-    taskInput.value = '';
+    // Run initial visualization loop on load
     renderTasks();
-}
-
-// Toggle complete status
-window.toggleComplete = function(index) {
-    tasks[index].completed = !tasks[index].completed;
-    renderTasks();
-};
-
-// Delete a task
-window.deleteTask = function(index) {
-    tasks.splice(index, 1);
-    renderTasks();
-};
-
-// Save current tasks array to localStorage
-function saveToLocalStorage() {
-    localStorage.setItem('tasks', JSON.stringify(tasks));
-}
-
-// Event Listeners
-addBtn.addEventListener('click', addTask);
-taskInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') addTask();
 });
-
-// Initial run
-renderTasks();
 
